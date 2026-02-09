@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Name | Portfolio</title>
+    <meta
+      name="description"
+      content="Personal portfolio of Your Name, showcasing projects, background, and ways to get in touch."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="site-logo">
+          <a href="#hero">Your Name</a>
+        </div>
+        <nav class="site-nav" aria-label="Primary">
+          <ul>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero Section -->
+      <section id="hero" class="section hero">
+        <div class="container hero-inner">
+          <div class="hero-text">
+            <p class="hero-kicker">Hi, I'm</p>
+            <h1 class="hero-title">Your Name</h1>
+            <p class="hero-tagline">
+              A short, punchy tagline about what you do (e.g., “Frontend developer crafting clean, user-friendly
+              experiences.”)
+            </p>
+            <div class="hero-actions">
+              <a class="btn primary-btn" href="#projects">View my projects</a>
+              <a class="btn secondary-btn" href="#contact">Get in touch</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Projects Section -->
+      <section id="projects" class="section projects">
+        <div class="container">
+          <header class="section-header">
+            <h2>Projects</h2>
+            <p>A selection of recent work I’m proud of.</p>
+          </header>
+          <div class="projects-grid">
+            <article class="project-card">
+              <h3>Project One</h3>
+              <p>
+                Brief description of what this project does, who it’s for, or what problem it solves. One or two
+                concise sentences.
+              </p>
+              <p class="project-tech">HTML · CSS · JavaScript</p>
+              <div class="project-links">
+                <a href="#" class="project-link">Live demo</a>
+                <a href="#" class="project-link">GitHub</a>
+              </div>
+            </article>
+
+            <article class="project-card">
+              <h3>Project Two</h3>
+              <p>
+                Brief description of the project. Highlight your main contribution or a notable technical detail.
+              </p>
+              <p class="project-tech">HTML · CSS</p>
+              <div class="project-links">
+                <a href="#" class="project-link">Live demo</a>
+                <a href="#" class="project-link">GitHub</a>
+              </div>
+            </article>
+
+            <article class="project-card">
+              <h3>Project Three</h3>
+              <p>
+                Brief description that explains what the project is and why it matters. Keep it scannable and clear.
+              </p>
+              <p class="project-tech">HTML · CSS · React</p>
+              <div class="project-links">
+                <a href="#" class="project-link">Live demo</a>
+                <a href="#" class="project-link">GitHub</a>
+              </div>
+            </article>
+
+            <article class="project-card">
+              <h3>Project Four</h3>
+              <p>
+                Brief description of the project outcome or impact. Mention results, users, or what you learned.
+              </p>
+              <p class="project-tech">HTML · CSS · Node.js</p>
+              <div class="project-links">
+                <a href="#" class="project-link">Live demo</a>
+                <a href="#" class="project-link">GitHub</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section id="about" class="section about">
+        <div class="container">
+          <header class="section-header">
+            <h2>About</h2>
+          </header>
+          <div class="about-content">
+            <p>
+              I’m a [your role here] based in [location]. I enjoy building clean, accessible interfaces and
+              experiences for the web.
+            </p>
+            <p>
+              In the past, I’ve worked on [types of projects or industries]. I like solving real problems with simple,
+              focused solutions and collaborating closely with designers, engineers, and stakeholders.
+            </p>
+            <p>
+              Right now, I’m interested in opportunities related to [types of roles or projects you’re looking for].
+              When I’m not at the computer, you can usually find me [a short personal detail].
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section id="contact" class="section contact">
+        <div class="container">
+          <header class="section-header">
+            <h2>Contact</h2>
+            <p>Want to work together or just say hi? I’d love to hear from you.</p>
+          </header>
+          <div class="contact-links">
+            <a
+              class="btn primary-btn"
+              href="https://twitter.com/your-handle"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Twitter profile"
+            >
+              Twitter
+            </a>
+            <a
+              class="btn secondary-btn"
+              href="https://www.linkedin.com/in/your-handle"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn profile"
+            >
+              LinkedIn
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© <span id="year"></span> Your Name. All rights reserved.</p>
+        <p class="footer-small">
+          Built with plain HTML &amp; CSS.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Simple enhancement: keep the year up to date
+      (function () {
+        var yearEl = document.getElementById('year');
+        if (yearEl) {
+          yearEl.textContent = new Date().getFullYear();
+        }
+      })();
+    </script>
+  </body>
+</html>
+
