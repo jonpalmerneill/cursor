@@ -56,67 +56,6 @@
     });
   }
 
-  function initChat() {
-    var toggleBtn = document.getElementById("chat-toggle");
-    var panel = document.getElementById("chat-panel");
-    var closeBtn = document.getElementById("chat-close");
-    var form = document.getElementById("chat-form");
-    var input = document.getElementById("chat-input");
-    var messagesEl = document.getElementById("chat-messages");
-
-    if (!toggleBtn || !panel || !form || !input || !messagesEl) return;
-
-    function openChat() {
-      panel.classList.add("chat-panel-open");
-    }
-
-    function closeChat() {
-      panel.classList.remove("chat-panel-open");
-    }
-
-    toggleBtn.addEventListener("click", openChat);
-    if (closeBtn) closeBtn.addEventListener("click", closeChat);
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var text = (input.value || "").trim();
-      if (!text) return;
-
-      var msgDiv = document.createElement("div");
-      msgDiv.className = "chat-message chat-message-user";
-      msgDiv.textContent = text;
-      messagesEl.appendChild(msgDiv);
-
-      var assistantDiv = document.createElement("div");
-      assistantDiv.className = "chat-message chat-message-assistant";
-      assistantDiv.textContent = "…";
-      messagesEl.appendChild(assistantDiv);
-
-      input.value = "";
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-
-      supabase.functions
-        .invoke("chat", { body: { message: text } })
-        .then(function (res) {
-          if (res.error) {
-            console.error("Chat function error:", res.error);
-            console.error("Chat response (full):", res);
-            if (res.data && typeof res.data === "object" && res.data.error) {
-              console.error("Server message:", res.data.error);
-            }
-            assistantDiv.textContent = "Sorry, something went wrong. Try again.";
-            return;
-          }
-          assistantDiv.textContent = (res.data && res.data.reply) ? res.data.reply : "No reply.";
-          messagesEl.scrollTop = messagesEl.scrollHeight;
-        })
-        .catch(function (err) {
-          console.error("Chat request failed:", err);
-          assistantDiv.textContent = "Sorry, something went wrong. Try again.";
-        });
-    });
-  }
-
   function initComments() {
     var listEl = document.getElementById("comments-list");
     var formEl = document.getElementById("comment-form");
@@ -232,7 +171,6 @@
     supabase.auth.onAuthStateChange(function (_event, session) {
       updateCommentFormVisibility();
     });
-    initChat();
     initComments();
   });
 })();
