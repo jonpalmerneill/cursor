@@ -121,9 +121,9 @@ This static site can be deployed to any static hosting service:
 
 - **GitHub Pages**: Enable Pages in your repository settings
 - **Netlify**: Drag and drop the folder or connect via Git
-- **Vercel**: Connect your Git repository or use the CLI
+- **Vercel**: Connect your Git repository or use the CLI. In Project Settings → Environment Variables, add `SUPABASE_URL` and `SUPABASE_ANON_KEY`; the build generates `config.js` from these.
 
-No build step required. Ensure `config.js` is present on the server (or set `SUPABASE_URL` / `SUPABASE_ANON_KEY` via your host’s env and inject them into a small config script if needed).
+No build step required for other hosts. Ensure `config.js` is present on the server (or set `SUPABASE_URL` / `SUPABASE_ANON_KEY` via your host’s env and inject them into a small config script if needed).
 
 ## Browser Support
 
