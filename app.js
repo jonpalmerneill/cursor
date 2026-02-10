@@ -9,15 +9,16 @@
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.warn("Supabase config missing. Copy config.example.js to config.js and add your project URL and anon key.");
-    renderAuthUI(null);
+    renderAuthUI(null, null);
     return;
   }
 
   var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  function renderAuthUI(user) {
+  function renderAuthUI(user, client) {
     var container = document.getElementById("auth-ui");
     if (!container) return;
+    var sb = client || supabase;
 
     if (user) {
       var name = user.user_metadata?.full_name || user.user_metadata?.name || user.email || "Signed in";
@@ -25,15 +26,17 @@
         '<span class="auth-user">' + escapeHtml(name) + "</span> " +
         '<button type="button" class="btn secondary-btn auth-sign-out" aria-label="Sign out">Sign out</button>';
       container.querySelector(".auth-sign-out").addEventListener("click", function () {
-        supabase.auth.signOut().then(function () {
-          window.location.reload();
-        });
+        if (sb) sb.auth.signOut().then(function () { window.location.reload(); });
       });
     } else {
       container.innerHTML =
         '<button type="button" class="btn primary-btn auth-sign-in-google" aria-label="Sign in with Google">Sign in with Google</button>';
       container.querySelector(".auth-sign-in-google").addEventListener("click", function () {
-        supabase.auth.signInWithOAuth({ provider: "google" });
+        if (!sb) {
+          console.error("Sign-in failed: Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.");
+          return;
+        }
+        sb.auth.signInWithOAuth({ provider: "google" });
       });
     }
   }
