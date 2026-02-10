@@ -28,8 +28,10 @@
             <li><a href="#projects">Projects</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
+            <li><a href="#comments">Comments</a></li>
           </ul>
         </nav>
+        <div id="auth-ui" class="auth-ui"></div>
       </div>
     </header>
 
@@ -164,7 +166,40 @@
           </div>
         </div>
       </section>
+
+      <!-- Comments Section -->
+      <section id="comments" class="section comments">
+        <div class="container">
+          <header class="section-header">
+            <h2>Comments</h2>
+            <p>Signed-in users can leave a message below.</p>
+          </header>
+          <div id="comments-list" class="comments-list"></div>
+          <div id="comment-form-wrap" class="comment-form-wrap" style="display: none;">
+            <form id="comment-form" class="comment-form" aria-label="Leave a comment">
+              <label for="comment-body">Your message</label>
+              <textarea id="comment-body" name="body" rows="3" maxlength="2000" required placeholder="Write a comment…"></textarea>
+              <button type="submit" id="comment-submit" class="btn primary-btn">Post comment</button>
+            </form>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <!-- Chat widget -->
+    <button type="button" id="chat-toggle" class="chat-toggle" aria-label="Open AI chat">Chat</button>
+    <div id="chat-panel" class="chat-panel" aria-label="AI chat">
+      <div class="chat-panel-header">
+        <h3>Ask about my work</h3>
+        <button type="button" id="chat-close" class="chat-close" aria-label="Close chat">×</button>
+      </div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" class="chat-form">
+        <label for="chat-input" class="visually-hidden">Your question</label>
+        <input type="text" id="chat-input" placeholder="Ask a question…" maxlength="500" />
+        <button type="submit" class="btn primary-btn">Send</button>
+      </form>
+    </div>
 
     <footer class="site-footer">
       <div class="container footer-inner">
@@ -175,13 +210,13 @@
       </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
     <script>
-      // Simple enhancement: keep the year up to date
       (function () {
         var yearEl = document.getElementById('year');
-        if (yearEl) {
-          yearEl.textContent = new Date().getFullYear();
-        }
+        if (yearEl) yearEl.textContent = new Date().getFullYear();
       })();
     </script>
   </body>

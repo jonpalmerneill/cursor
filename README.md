@@ -1,31 +1,65 @@
-# Personal Portfolio Website
+# Personal Portfolio Web App
 
-A minimalist, single-page portfolio website built with vanilla HTML and CSS. Features a clean black-and-white design focused purely on typography and content.
+A minimalist, single-page portfolio with **Google sign-in**, an **AI chat widget** (OpenAI) that answers questions about your work, and a **comment section** for signed-in users. Built with vanilla HTML, CSS, and JavaScript; auth and data via Supabase.
 
 ## What This Project Is
 
-This is a personal portfolio website designed to showcase:
-- **Hero section**: Introduction with name and tagline
-- **Projects section**: Display of 4 recent works with descriptions and links
-- **About section**: Personal bio and background
-- **Contact section**: Links to Twitter and LinkedIn
+- **Hero, Projects, About, Contact**: Same portfolio content as before
+- **Google sign-in**: Sign in with Google only (no email/password)
+- **AI chat**: Floating “Chat” button opens a panel; asks OpenAI (via Supabase Edge Function) questions about your work
+- **Comments**: Signed-in users can post messages; everyone can read
 
 ## Features
 
-- **Pure HTML/CSS**: No frameworks, build tools, or JavaScript dependencies (except a small script to update the copyright year)
-- **Responsive design**: Mobile-first approach with CSS Grid and Flexbox
-- **Minimalist aesthetic**: Black and white color scheme, text-only design
-- **Semantic HTML**: Proper use of semantic elements for accessibility
-- **Google Fonts**: Uses Inter font family for modern typography
+- **Vanilla stack**: HTML, CSS, JS; Supabase client for auth and database
+- **Auth**: Supabase Auth with Google OAuth
+- **AI**: Supabase Edge Function calls OpenAI (API key stored in Supabase secrets)
+- **Comments**: PostgreSQL table with RLS (read all; insert/update/delete own)
+- **Minimalist design**: Black and white, text-focused
 
 ## Project Structure
 
 ```
 .
-├── index.html      # Main HTML file with all sections
-├── styles.css      # All styling and responsive design
-└── README.md       # This file
+├── index.html          # Main page (portfolio + auth + chat + comments)
+├── styles.css          # Styles
+├── app.js              # Auth, chat widget, comments logic
+├── config.example.js   # Copy to config.js and add Supabase URL + anon key
+├── .env.example        # Reference for env vars (Supabase; OpenAI lives in Edge Function secrets)
+├── supabase/
+│   ├── functions/
+│   │   └── chat/
+│   │       └── index.ts   # Edge Function: OpenAI chat
+│   └── migrations/
+│       └── 20250209000000_create_comments.sql   # comments table + RLS
+└── README.md
 ```
+
+## Setup (Supabase, config, chat, comments)
+
+1. **Supabase project**
+   - Create a project at [supabase.com](https://supabase.com).
+   - In **Authentication → Providers**, enable **Google** and add your OAuth client ID and secret (from Google Cloud Console).
+   - In **Project Settings → API**, copy the **Project URL** and **anon public** key.
+
+2. **Frontend config**
+   - Copy `config.example.js` to `config.js`.
+   - Set `window.__SUPABASE_URL__` and `window.__SUPABASE_ANON_KEY__` in `config.js` (from step 1).  
+   - Do not commit `config.js` (it is in `.gitignore`).
+
+3. **Comments table**
+   - In Supabase **SQL Editor**, run the contents of `supabase/migrations/20250209000000_create_comments.sql` (creates `comments` table and RLS policies).
+
+4. **AI chat (Edge Function)**
+   - Install [Supabase CLI](https://supabase.com/docs/guides/cli) and link your project: `supabase link --project-ref YOUR_REF`.
+   - Set the OpenAI API key as a secret:  
+     `supabase secrets set OPENAI_API_KEY=sk-your-key`
+   - Deploy the function **without JWT verification** so the browser preflight (OPTIONS) succeeds:  
+     `supabase functions deploy chat --no-verify-jwt`
+   - (Optional) Edit the system prompt in `supabase/functions/chat/index.ts` to match your name and bio, then redeploy.
+
+5. **Redirect URL**
+   - In Supabase **Authentication → URL Configuration**, set **Site URL** and add **Redirect URLs** for your app (e.g. `http://localhost:8000`, `https://your-site.com`).
 
 ## How to Run Locally
 
@@ -89,7 +123,7 @@ This static site can be deployed to any static hosting service:
 - **Netlify**: Drag and drop the folder or connect via Git
 - **Vercel**: Connect your Git repository or use the CLI
 
-No build step required—just upload the files!
+No build step required. Ensure `config.js` is present on the server (or set `SUPABASE_URL` / `SUPABASE_ANON_KEY` via your host’s env and inject them into a small config script if needed).
 
 ## Browser Support
 
