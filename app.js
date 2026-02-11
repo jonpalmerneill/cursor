@@ -69,6 +69,27 @@
 
     if (!listEl) return;
 
+    var ALLOWED_FONTS = ["Work Sans", "Open Sans", "Lora", "Merriweather", "Playfair Display", "Roboto", "Source Sans 3", "Inter", "Poppins", "Nunito"];
+    var loadedFonts = { "Work Sans": true };
+
+    function ensureGoogleFontLoaded(fontFamily) {
+      if (!fontFamily || loadedFonts[fontFamily]) return;
+      if (ALLOWED_FONTS.indexOf(fontFamily) === -1) return;
+      loadedFonts[fontFamily] = true;
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(fontFamily).replace(/%20/g, "+") + ":wght@400;600;700&display=swap";
+      document.head.appendChild(link);
+    }
+
+    function luminanceHex(hex) {
+      var m = hex.replace(/^#/, "").match(/(.{2})/g);
+      if (!m || (m.length !== 3 && m.length !== 1)) return 0.5;
+      if (m.length === 1) m = [m[0] + m[0], m[0] + m[0], m[0] + m[0]];
+      var r = parseInt(m[0], 16) / 255, g = parseInt(m[1], 16) / 255, b = parseInt(m[2], 16) / 255;
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
     var turnstileWidgetId = null;
     var turnstileToken = null;
 
@@ -149,10 +170,6 @@
             img.loading = "lazy";
             wrap.insertBefore(img, wrap.firstChild);
           }
-          var titleEl = wrap.querySelector(".link-preview-title");
-          var descEl = wrap.querySelector(".link-preview-desc");
-          if (titleEl && data.title) titleEl.textContent = data.title;
-          if (descEl && data.description) descEl.textContent = data.description;
         })
         .catch(function () {});
     }
@@ -174,13 +191,21 @@
       comments.forEach(function (c) {
         var item = document.createElement("div");
         item.className = "comment-item";
+        if (c.background_color && /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(c.background_color)) {
+          item.classList.add("comment-item-custom");
+          item.style.backgroundColor = c.background_color;
+          item.style.color = luminanceHex(c.background_color) > 0.5 ? "#0a0a0a" : "#fff";
+        }
+        if (c.font_family && ALLOWED_FONTS.indexOf(c.font_family) !== -1) {
+          ensureGoogleFontLoaded(c.font_family);
+          item.style.fontFamily = '"' + c.font_family.replace(/"/g, "") + '", sans-serif';
+        }
         var name = escapeText(c.author_name || "Anonymous");
         var bodyHtml = linkify(c.body || "");
         var formatted = formatCommentDate(c.created_at);
         var firstUrl = getFirstUrl(c.body);
         var linkPreviewHtml = firstUrl
-          ? '<a class="link-preview" href="' + escapeText(firstUrl) + '" target="_blank" rel="noopener noreferrer">' +
-            '<span class="link-preview-content"><span class="link-preview-title"></span><span class="link-preview-desc"></span></span></a>'
+          ? '<a class="link-preview" href="' + escapeText(firstUrl) + '" target="_blank" rel="noopener noreferrer"></a>'
           : "";
         var metaLabel = escapeText(formatted.date) + " · " + escapeText(formatted.time);
         item.innerHTML =
@@ -195,25 +220,57 @@
         listEl.appendChild(item);
         if (firstUrl) fetchLinkPreview(firstUrl, item);
       });
+      var Motion = window.Motion;
+      if (Motion && Motion.animate) {
+        var items = listEl.querySelectorAll(".comment-item");
+        if (items.length) {
+          var opts = { duration: 0.45, ease: "easeOut" };
+          if (Motion.stagger) opts.delay = Motion.stagger(0.06, { start: 0 });
+          Motion.animate(items, { opacity: [0, 1], y: [24, 0] }, opts);
+        }
+      }
     }
 
     function loadComments() {
+      function onResult(_ref2) {
+        var data = _ref2.data;
+        var err = _ref2.error;
+        if (err) return err;
+        renderComments(data || []);
+        return null;
+      }
+
       supabase
         .from("comments")
-        .select("id, author_name, body, created_at")
+        .select("id, author_name, body, created_at, background_color, font_family")
         .order("created_at", { ascending: false })
-        .then(function (_ref2) {
-          var data = _ref2.data;
-          var err = _ref2.error;
-          if (err) {
-            listEl.innerHTML = "<p class=\"comments-error\">Could not load comments.</p>";
+        .then(function (ref) {
+          var err = onResult(ref);
+          if (!err) return;
+          var msg = (err.message || "").toLowerCase();
+          var isColumnError = err.code === "42703" || msg.indexOf("column") !== -1 || msg.indexOf("background_color") !== -1 || msg.indexOf("font_family") !== -1;
+          if (isColumnError) {
+            supabase
+              .from("comments")
+              .select("id, author_name, body, created_at")
+              .order("created_at", { ascending: false })
+              .then(function (ref2) {
+                if (ref2.error) {
+                  listEl.innerHTML = "<p class=\"comments-error\">Could not load comments.</p>";
+                  return;
+                }
+                renderComments(ref2.data || []);
+              });
             return;
           }
-          renderComments(data || []);
+          listEl.innerHTML = "<p class=\"comments-error\">Could not load comments.</p>";
         });
     }
 
     loadComments();
+
+    var bgColorEl = document.getElementById("comment-bg-color");
+    var fontEl = document.getElementById("comment-font");
 
     if (formEl && textarea && submitBtn) {
       formEl.addEventListener("submit", function (e) {
@@ -228,6 +285,10 @@
           return;
         }
 
+        var bgColor = (bgColorEl && bgColorEl.value) ? bgColorEl.value : null;
+        var fontFamily = (fontEl && fontEl.value && ALLOWED_FONTS.indexOf(fontEl.value) !== -1) ? fontEl.value : null;
+        if (bgColor && !/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(bgColor)) bgColor = null;
+
         submitBtn.disabled = true;
 
         supabase.auth.getSession().then(function (_ref3) {
@@ -240,15 +301,19 @@
           var authorName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || "Anonymous";
           var authorAvatar = user.user_metadata?.avatar_url || null;
 
+          var payload = {
+            user_id: user.id,
+            author_name: authorName,
+            author_avatar_url: authorAvatar,
+            body: body,
+            section_id: "main"
+          };
+          if (bgColor) payload.background_color = bgColor;
+          if (fontFamily) payload.font_family = fontFamily;
+
           supabase
             .from("comments")
-            .insert({
-              user_id: user.id,
-              author_name: authorName,
-              author_avatar_url: authorAvatar,
-              body: body,
-              section_id: "main"
-            })
+            .insert(payload)
             .select()
             .then(function (_ref4) {
               var err = _ref4.error;
@@ -273,11 +338,35 @@
   function updateCommentFormVisibility() {
     supabase.auth.getSession().then(function (_ref5) {
       var session = _ref5.data.session;
+      var signedIn = !!(session && session.user);
+      var formEl = document.getElementById("comment-form");
       var textarea = document.getElementById("comment-body");
       var submitBtn = document.getElementById("comment-submit");
-      var signedIn = !!(session && session.user);
       if (textarea) textarea.disabled = !signedIn;
       if (submitBtn) submitBtn.disabled = !signedIn;
+      if (!formEl) return;
+      var Motion = window.Motion;
+      if (signedIn) {
+        formEl.style.display = "flex";
+        formEl.style.opacity = "0";
+        formEl.style.transform = "translateY(8px)";
+        if (Motion && Motion.animate) {
+          Motion.animate(formEl, { opacity: 1, y: 0 }, { duration: 0.35, ease: "easeOut" });
+        } else {
+          formEl.style.opacity = "1";
+          formEl.style.transform = "";
+        }
+      } else {
+        if (Motion && Motion.animate) {
+          Motion.animate(formEl, { opacity: 0, y: -6 }, { duration: 0.2, ease: "easeIn" }).then(function () {
+            formEl.style.display = "none";
+            formEl.style.opacity = "";
+            formEl.style.transform = "";
+          });
+        } else {
+          formEl.style.display = "none";
+        }
+      }
     });
   }
 
