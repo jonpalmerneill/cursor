@@ -3,9 +3,11 @@
 
   if (typeof window.__SUPABASE_URL__ === "undefined") window.__SUPABASE_URL__ = "";
   if (typeof window.__SUPABASE_ANON_KEY__ === "undefined") window.__SUPABASE_ANON_KEY__ = "";
+  if (typeof window.__TURNSTILE_SITE_KEY__ === "undefined") window.__TURNSTILE_SITE_KEY__ = "";
 
   var SUPABASE_URL = window.__SUPABASE_URL__;
   var SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__;
+  var TURNSTILE_SITE_KEY = (window.__TURNSTILE_SITE_KEY__ || "").trim();
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.warn("Supabase config missing. Copy config.example.js to config.js and add your project URL and anon key.");
@@ -67,11 +69,92 @@
 
     if (!listEl) return;
 
+    var turnstileWidgetId = null;
+    var turnstileToken = null;
+
+    if (!TURNSTILE_SITE_KEY) {
+      var tw = document.getElementById("turnstile-widget");
+      if (tw) tw.style.display = "none";
+    }
+
+    function initTurnstile() {
+      if (!TURNSTILE_SITE_KEY || typeof window.turnstile !== "object") return;
+      var container = document.getElementById("turnstile-widget");
+      if (!container || container.children.length > 0) return;
+      try {
+        turnstileWidgetId = window.turnstile.render(container, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "light",
+          callback: function (token) {
+            turnstileToken = token;
+          },
+          "expired-callback": function () {
+            turnstileToken = null;
+          },
+          "error-callback": function () {
+            turnstileToken = null;
+          }
+        });
+      } catch (err) {
+        console.warn("Turnstile render failed", err);
+      }
+    }
+
+    function tryInitTurnstile(attempt) {
+      attempt = attempt || 0;
+      if (window.turnstile && TURNSTILE_SITE_KEY) {
+        initTurnstile();
+        return;
+      }
+      if (attempt < 50) setTimeout(function () { tryInitTurnstile(attempt + 1); }, 100);
+    }
+
+    tryInitTurnstile();
+
     function escapeText(str) {
       if (!str) return "";
       var d = document.createElement("div");
       d.textContent = str;
       return d.innerHTML;
+    }
+
+    function linkify(str) {
+      var urlRe = /(https?:\/\/[^\s]+)/gi;
+      return escapeText(str).replace(urlRe, function (url) {
+        return '<a href="' + escapeText(url) + '" target="_blank" rel="noopener noreferrer">' + escapeText(url) + "</a>";
+      });
+    }
+
+    function getFirstUrl(str) {
+      var match = (str || "").match(/(https?:\/\/[^\s]+)/i);
+      return match ? match[1].replace(/[.,;:!?)]+$/, "") : null;
+    }
+
+    function fetchLinkPreview(url, container) {
+      var apiUrl = "https://api.microlink.io?url=" + encodeURIComponent(url) + "&screenshot=false";
+      fetch(apiUrl)
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (!res || !res.data || !container) return;
+          var wrap = container.querySelector(".link-preview");
+          if (!wrap) return;
+          var data = res.data;
+          var imgUrl = data.image;
+          if (imgUrl && typeof imgUrl === "object" && imgUrl.url) imgUrl = imgUrl.url;
+          if (typeof imgUrl === "string" && imgUrl) {
+            var img = document.createElement("img");
+            img.className = "link-preview-img";
+            img.src = imgUrl;
+            img.alt = "";
+            img.loading = "lazy";
+            wrap.insertBefore(img, wrap.firstChild);
+          }
+          var titleEl = wrap.querySelector(".link-preview-title");
+          var descEl = wrap.querySelector(".link-preview-desc");
+          if (titleEl && data.title) titleEl.textContent = data.title;
+          if (descEl && data.description) descEl.textContent = data.description;
+        })
+        .catch(function () {});
     }
 
     function renderComments(comments) {
@@ -80,17 +163,37 @@
         listEl.innerHTML = "<p class=\"comments-empty\">No comments yet.</p>";
         return;
       }
+      function formatCommentDate(iso) {
+        if (!iso) return { date: "", time: "" };
+        var d = new Date(iso);
+        var dateStr = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+        var timeStr = d.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", hour12: true }) + " EST";
+        return { date: dateStr, time: timeStr };
+      }
+
       comments.forEach(function (c) {
         var item = document.createElement("div");
         item.className = "comment-item";
         var name = escapeText(c.author_name || "Anonymous");
-        var body = escapeText(c.body);
-        var date = c.created_at ? new Date(c.created_at).toLocaleDateString() : "";
+        var bodyHtml = linkify(c.body || "");
+        var formatted = formatCommentDate(c.created_at);
+        var firstUrl = getFirstUrl(c.body);
+        var linkPreviewHtml = firstUrl
+          ? '<a class="link-preview" href="' + escapeText(firstUrl) + '" target="_blank" rel="noopener noreferrer">' +
+            '<span class="link-preview-content"><span class="link-preview-title"></span><span class="link-preview-desc"></span></span></a>'
+          : "";
+        var metaLabel = escapeText(formatted.date) + " · " + escapeText(formatted.time);
         item.innerHTML =
-          "<strong class=\"comment-author\">" + name + "</strong> " +
-          "<span class=\"comment-date\">" + escapeText(date) + "</span>" +
-          "<p class=\"comment-body\">" + body + "</p>";
+          "<div class=\"comment-content\">" +
+          "<p class=\"comment-body\">" + bodyHtml + "</p>" +
+          "<span class=\"comment-meta\">" +
+          "<strong class=\"comment-author\">" + name + "</strong> · " +
+          "<span class=\"comment-meta-label\">" + metaLabel + "</span>" +
+          "</span>" +
+          "</div>" +
+          linkPreviewHtml;
         listEl.appendChild(item);
+        if (firstUrl) fetchLinkPreview(firstUrl, item);
       });
     }
 
@@ -121,6 +224,10 @@
         }
         if (!body) return;
 
+        if (TURNSTILE_SITE_KEY && !turnstileToken) {
+          return;
+        }
+
         submitBtn.disabled = true;
 
         supabase.auth.getSession().then(function (_ref3) {
@@ -150,6 +257,12 @@
                 return;
               }
               textarea.value = "";
+              if (TURNSTILE_SITE_KEY && turnstileWidgetId != null && window.turnstile) {
+                try {
+                  window.turnstile.reset(turnstileWidgetId);
+                } catch (r) {}
+                turnstileToken = null;
+              }
               loadComments();
             });
         });
@@ -160,10 +273,11 @@
   function updateCommentFormVisibility() {
     supabase.auth.getSession().then(function (_ref5) {
       var session = _ref5.data.session;
-      var formWrap = document.getElementById("comment-form-wrap");
-      if (formWrap) {
-        formWrap.style.display = session && session.user ? "block" : "none";
-      }
+      var textarea = document.getElementById("comment-body");
+      var submitBtn = document.getElementById("comment-submit");
+      var signedIn = !!(session && session.user);
+      if (textarea) textarea.disabled = !signedIn;
+      if (submitBtn) submitBtn.disabled = !signedIn;
     });
   }
 

@@ -5,29 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>What's up Grand Rapids?</title>
     <meta name="description" content="Things to do and activities happening in Grand Rapids. Leave a comment." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
-      <div class="container header-inner">
-        <h1 class="page-title">What's up Grand Rapids?</h1>
+      <div class="header-inner">
         <div id="auth-ui" class="auth-ui"></div>
-      </div>
-    </header>
-
-    <main class="container">
-      <p class="intro">Things to do and activities happening. Sign in with Google to add a comment.</p>
-      <div id="comments-list" class="comments-list"></div>
-      <div id="comment-form-wrap" class="comment-form-wrap" style="display: none;">
-        <form id="comment-form" class="comment-form" aria-label="Add a comment">
-          <label for="comment-body">Add something to do or an activity</label>
-          <textarea id="comment-body" name="body" rows="3" maxlength="2000" required placeholder="Things to do or what's happening…"></textarea>
+        <form id="comment-form" class="comment-form header-form" aria-label="Add a comment">
+          <textarea id="comment-body" name="body" rows="2" maxlength="2000" required placeholder="What's up Grand Rapids?"></textarea>
+          <div id="turnstile-widget" class="turnstile-widget" aria-hidden="true"></div>
           <button type="submit" id="comment-submit" class="btn btn-submit">Post</button>
         </form>
       </div>
+    </header>
+
+    <main>
+      <div id="comments-list" class="comments-list"></div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
     <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
