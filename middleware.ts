@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const COOKIE_NAME = process.env.SITE_GATE_COOKIE || "site_gate";
-
 export function middleware(req: NextRequest) {
+  const cookieName = process.env.SITE_GATE_COOKIE || "site_gate";
   const { pathname } = req.nextUrl;
 
   // Allow these through
@@ -17,7 +16,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasGate = req.cookies.get(COOKIE_NAME)?.value === "1";
+  const hasGate = req.cookies.get(cookieName)?.value === "1";
   if (hasGate) return NextResponse.next();
 
   const url = req.nextUrl.clone();
@@ -27,5 +26,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!.*\\.).*)"], // all paths except static files with extensions
+  // Standard Next.js pattern: run on all routes except static assets
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
