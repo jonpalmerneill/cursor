@@ -1,9 +1,10 @@
-export default function PasswordPage({
+export default async function PasswordPage({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  searchParams: Promise<{ next?: string }>;
 }) {
-  const next = searchParams?.next || "/";
+  const params = await searchParams;
+  const next = params?.next || "/";
 
   return (
     <main style={{ maxWidth: 420, margin: "10vh auto", padding: 24 }}>

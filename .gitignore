@@ -1,5 +1,8 @@
 .env
 config.js
+public/config.js
 node_modules/
 supabase/.temp/
 .DS_Store
+.next/
+next-env.d.ts
