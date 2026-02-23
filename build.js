@@ -17,6 +17,6 @@ const out = [
   "window.__TURNSTILE_SITE_KEY__ = " + JSON.stringify(turnstileKey) + ";",
 ].join("\n");
 
-const outPath = path.join(__dirname, "public", "config.js");
+const outPath = path.resolve("public", "config.js");
 fs.writeFileSync(outPath, out, "utf8");
 console.log("Wrote config.js from env (SUPABASE_URL:", !!url, ", TURNSTILE_SITE_KEY:", !!turnstileKey, ")");
