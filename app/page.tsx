@@ -1,4 +1,13 @@
-export default function Home() {
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export default async function Home() {
+  const cookieStore = await cookies();
+  const cookieName = process.env.SITE_GATE_COOKIE || "site_gate";
+  if (cookieStore.get(cookieName)?.value !== "1") {
+    redirect("/password");
+  }
+
   return (
     <>
       <header className="site-header">
